@@ -535,14 +535,19 @@
                     ;; NB waiting on CLJ-865:
                     ?line  (fline &form)}} opts
 
-            ?file (when (not= ?file "NO_SOURCE_PATH") ?file)
+            ?file (when-not (or (= ?file "NO_SOURCE_PATH")
+                                (-> ?file
+                                    (str/split #"/")
+                                    last
+                                    (.startsWith "form-init")))
+                    ?file)
 
             ;; Identifies this particular macro expansion; note that this'll
             ;; be fixed for any fns wrapping `log!` (notably `tools.logging`,
             ;; `slf4j-timbre`, etc.):
             callsite-id
             (hash [level msg-type args ; Unevaluated args (arg forms)
-                   ?ns-str ?file ?line (rand)])]
+                   ?ns-str ?file ?line])]
 
         `(-log! ~config ~level ~?ns-str ~?file ~?line ~msg-type ~?err
            (delay [~@args]) ~?base-data ~callsite-id)))))
